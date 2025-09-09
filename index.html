@@ -95,22 +95,21 @@
         </div>
     </main>
 
-   <script>
+  <script>
     const MODEL_NAME = "openai/gpt-oss-20b:free";
 
     const systemInstruction = `You are a professional Cognitive Auditor AI, a silent partner for high-stakes decisions.
 Your task is to analyze a meeting transcript to identify specific cognitive biases, logical fallacies, and ethical blind spots.
 
 Analyze the transcript for the following issues:
-- **Biases from Too Much Information:** Anchoring Bias, Conservatism Bias, Curse of Knowledge, Decoy Effect, Framing Effect, Hindsight Bias, Pro-innovation Bias.
-- **Biases from Not Enough Meaning:** Bikeshedding, Clustering Illusion, Confabulation, Gambler's Fallacy, Over-generalization.
-- **Biases from the Need to Act Fast:** Apophenia, Availability Heuristic, Dunning-Kruger Effect, Halo Effect, Omission Bias.
-- **Biases from What We Should Remember:** Actor-Observer Bias, Ben Franklin Effect, Bizarreness Effect, Humor Effect, Peak-End Rule, Stereotypical Bias.
-- **Group Dynamics:** Groupthink, Bandwagon Effect, Illusion of Truth.
+- Biases from Too Much Information: Anchoring Bias, Conservatism Bias, Curse of Knowledge, Decoy Effect, Framing Effect, Hindsight Bias, Pro-innovation Bias.
+- Biases from Not Enough Meaning: Bikeshedding, Clustering Illusion, Confabulation, Gambler's Fallacy, Over-generalization.
+- Biases from the Need to Act Fast: Apophenia, Availability Heuristic, Dunning-Kruger Effect, Halo Effect, Omission Bias.
+- Biases from What We Should Remember: Actor-Observer Bias, Ben Franklin Effect, Bizarreness Effect, Humor Effect, Peak-End Rule, Stereotypical Bias.
+- Group Dynamics: Groupthink, Bandwagon Effect, Illusion of Truth.
 
-If you identify a potential issue, respond with a JSON object for each one with the keys 'type' (the name of the bias or fallacy), 'observation' (a direct quote or a specific reference from the text as evidence), and 'implication' (the potential negative effect of this bias on the decision-making process).
-
-If no issues are detected, respond with an empty JSON object {}. Focus exclusively on concrete, observable evidence. Be concise, professional, and objective.`;
+If you identify a potential issue, respond with a JSON object for each one with the keys 'type', 'observation', and 'implication'.
+If no issues are detected, respond with an empty JSON object {}. Respond only with valid JSON. Do not include commentary or markdown formatting.`;
 
     const textInput = document.getElementById('textInput');
     const analyzeButton = document.getElementById('analyzeButton');
@@ -202,24 +201,28 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
                 return;
             }
 
-            const cleanedText = resultText.replace(/```json\s*|```\s*/g, '').trim();
+            const cleanedText = resultText
+                .replace(/```json\s*|```/g, '')
+                .replace(/[\u0000-\u001F]+/g, '')
+                .trim();
+
             let insights = [];
 
             try {
-                const parsedResult = JSON.parse(cleanedText);
+                const parsed = JSON.parse(cleanedText);
 
-                if (Array.isArray(parsedResult)) {
-                    insights = parsedResult.filter(item =>
+                if (Array.isArray(parsed)) {
+                    insights = parsed.filter(item =>
                         item && typeof item === 'object' && item.type && item.observation && item.implication
                     );
-                } else if (typeof parsedResult === 'object' && parsedResult !== null) {
-                    if (parsedResult.type && parsedResult.observation && parsedResult.implication) {
-                        insights = [parsedResult];
+                } else if (typeof parsed === 'object' && parsed !== null) {
+                    if (parsed.type && parsed.observation && parsed.implication) {
+                        insights = [parsed];
                     }
                 }
-            } catch (parseError) {
-                console.error("Failed to parse JSON from AI response:", parseError, "Original text:", cleanedText);
-                errorMessage.textContent = `API returned an unreadable or non-JSON response.`;
+            } catch (err) {
+                console.error("Parsing failed:", err, "Raw response:", resultText);
+                errorMessage.textContent = "The response wasn't valid JSON. Try simplifying your input or rephrasing.";
                 errorMessage.style.display = 'block';
                 return;
             }
@@ -254,6 +257,7 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
 
 </body>
 </html>
+
 
 
 
