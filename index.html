@@ -55,7 +55,7 @@
                     id="uploadButton"
                     class="flex-1 max-w-[150px] py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-full transition-colors"
                 >
-                    Upload File
+                    Upload File (.txt or .md)
                 </button>
                 <input
                     type="file"
@@ -86,12 +86,19 @@
         const OPENROUTER_API_KEY = "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";
         const MODEL_NAME = "openai/gpt-oss-20b"; 
 
-        const systemInstruction = `You are a professional Cognitive Auditor AI.
-Your task is to analyze a meeting transcript to identify potential cognitive biases and ethical fallacies.
-If you identify a potential issue, respond with a JSON object with 'type', 'observation', and 'implication' keys.
-If no issues are detected, respond with an empty JSON object {}.
-Focus exclusively on concrete, observable evidence of biases like groupthink, confirmation bias, anchoring, etc., or ethical concerns.
-Be concise and professional.`;
+        const systemInstruction = `You are a professional Cognitive Auditor AI, a silent partner for high-stakes decisions.
+Your task is to analyze a meeting transcript to identify specific cognitive biases, logical fallacies, and ethical blind spots.
+
+Analyze the transcript for the following issues:
+- **Biases from Too Much Information:** Anchoring Bias, Conservatism Bias, Curse of Knowledge, Decoy Effect, Framing Effect, Hindsight Bias, Pro-innovation Bias.
+- **Biases from Not Enough Meaning:** Bikeshedding, Clustering Illusion, Confabulation, Gambler's Fallacy, Over-generalization.
+- **Biases from the Need to Act Fast:** Apophenia, Availability Heuristic, Dunning-Kruger Effect, Halo Effect, Omission Bias.
+- **Biases from What We Should Remember:** Actor-Observer Bias, Ben Franklin Effect, Bizarreness Effect, Humor Effect, Peak-End Rule, Stereotypical Bias.
+- **Group Dynamics:** Groupthink, Bandwagon Effect, Illusion of Truth.
+
+If you identify a potential issue, respond with a JSON object for each one with the keys 'type' (the name of the bias or fallacy), 'observation' (a direct quote or a specific reference from the text as evidence), and 'implication' (the potential negative effect of this bias on the decision-making process).
+
+If no issues are detected, respond with an empty JSON object {}. Focus exclusively on concrete, observable evidence. Be concise, professional, and objective.`;
 
         // DOM elements
         const textInput = document.getElementById('textInput');
@@ -181,7 +188,7 @@ Be concise and professional.`;
                 if (resultText) {
                     const cleanedText = resultText.replace(/```json\s*|```\s*/g, '').trim();
                     
-                    if (cleanedText !== '{}') {
+                    if (cleanedText !== '{}' && cleanedText !== '[]') {
                         try {
                             const parsedResult = JSON.parse(cleanedText);
                             const newInsights = [];
