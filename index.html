@@ -23,14 +23,24 @@
             0% { transform: rotate(0deg); }
             100% { transform: rotate(360deg); }
         }
+        .bouncing-image {
+            animation: bounce 2s infinite;
+        }
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white antialiased p-4 sm:p-8">
 
     <header class="text-center mb-8">
-        <h1 class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
-            The Algorithmic Conscience
-        </h1>
+        <div class="flex flex-col items-center justify-center">
+            <img src="uploaded:OIP.png-a7bd9546-6ad4-4f6d-b29e-d469aaa413be" alt="151 Biases" class="w-20 h-20 rounded-full shadow-lg border-2 border-purple-500 mb-4 bouncing-image">
+            <h1 class="text-4xl sm:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-purple-600">
+                The Algorithmic Conscience
+            </h1>
+        </div>
         <p class="mt-2 text-sm sm:text-base text-gray-400 max-w-xl mx-auto">
             An ethical and cognitive auditor for high-stakes conversations.
         </p>
@@ -55,7 +65,7 @@
                     id="uploadButton"
                     class="flex-1 max-w-[150px] py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-full transition-colors"
                 >
-                    Upload txt/md File
+                    Upload File
                 </button>
                 <input
                     type="file"
@@ -68,7 +78,11 @@
         </div>
 
         <div class="panel bg-gray-800 p-6 rounded-2xl shadow-lg flex-1 flex flex-col">
-            <h2 class="text-xl font-bold mb-4 text-center">Cognitive Dashboard</h2>
+            <div class="flex flex-col items-center justify-center mb-4">
+                <h2 class="text-xl font-bold">Cognitive Dashboard</h2>
+                <span id="biasCount" class="text-4xl font-extrabold mt-2 text-transparent bg-clip-text bg-gradient-to-r from-red-400 to-yellow-400">0</span>
+                <span class="text-sm font-semibold text-gray-400">Biases Detected</span>
+            </div>
             <div id="dashboard-content" class="dashboard-content flex-1 overflow-y-auto space-y-4">
                 <div id="placeholder" class="flex items-center justify-center h-full text-center p-8">
                     <p class="text-gray-400">Insights will appear here after analysis.</p>
@@ -83,7 +97,7 @@
 
     <script>
         // Constants for the API
-        const OPENROUTER_API_KEY = "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";
+        const OPENROUTER_API_KEY = "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";
         const MODEL_NAME = "openai/gpt-oss-20b:free"; 
 
         const systemInstruction = `You are a professional Cognitive Auditor AI, a silent partner for high-stakes decisions.
@@ -109,6 +123,7 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
         const loadingSpinner = document.getElementById('loading-spinner');
         const errorMessage = document.getElementById('error-message');
         const placeholder = document.getElementById('placeholder');
+        const biasCount = document.getElementById('biasCount');
 
         // Function to show/hide the spinner and button state
         function setLoading(isLoading) {
@@ -120,6 +135,7 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
                 loadingSpinner.classList.remove('hidden');
                 placeholder.classList.add('hidden');
                 errorMessage.style.display = 'none';
+                biasCount.textContent = '...';
             } else {
                 analyzeButton.textContent = 'Analyze Text';
                 analyzeButton.disabled = false;
@@ -132,6 +148,8 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
         // Function to display insights on the dashboard
         function displayInsights(insights) {
             dashboardContent.innerHTML = '';
+            biasCount.textContent = insights.length;
+            
             if (insights.length > 0) {
                 insights.forEach(insight => {
                     const insightItem = document.createElement('div');
@@ -269,7 +287,3 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
 
 </body>
 </html>
-
-
-
-
