@@ -97,7 +97,7 @@
 
     <script>
         // Constants for the API
-        const OPENROUTER_API_KEY = "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";
+        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
         const MODEL_NAME = "openai/gpt-oss-20b:free"; 
 
         const systemInstruction = `You are a professional Cognitive Auditor AI, a silent partner for high-stakes decisions.
@@ -287,4 +287,5 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
 
 </body>
 </html>
+
 
