@@ -95,12 +95,10 @@
         </div>
     </main>
 
-    <script>
-        // Constants for the API
-        const OPENROUTER_API_KEY = process.env.OPENROUTER_API_KEY;
-        const MODEL_NAME = "openai/gpt-oss-20b:free"; 
+   <script>
+    const MODEL_NAME = "openai/gpt-oss-20b:free";
 
-        const systemInstruction = `You are a professional Cognitive Auditor AI, a silent partner for high-stakes decisions.
+    const systemInstruction = `You are a professional Cognitive Auditor AI, a silent partner for high-stakes decisions.
 Your task is to analyze a meeting transcript to identify specific cognitive biases, logical fallacies, and ethical blind spots.
 
 Analyze the transcript for the following issues:
@@ -114,178 +112,148 @@ If you identify a potential issue, respond with a JSON object for each one with 
 
 If no issues are detected, respond with an empty JSON object {}. Focus exclusively on concrete, observable evidence. Be concise, professional, and objective.`;
 
-        // DOM elements
-        const textInput = document.getElementById('textInput');
-        const analyzeButton = document.getElementById('analyzeButton');
-        const uploadButton = document.getElementById('uploadButton');
-        const fileInput = document.getElementById('fileInput');
-        const dashboardContent = document.getElementById('dashboard-content');
-        const loadingSpinner = document.getElementById('loading-spinner');
-        const errorMessage = document.getElementById('error-message');
-        const placeholder = document.getElementById('placeholder');
-        const biasCount = document.getElementById('biasCount');
+    const textInput = document.getElementById('textInput');
+    const analyzeButton = document.getElementById('analyzeButton');
+    const uploadButton = document.getElementById('uploadButton');
+    const fileInput = document.getElementById('fileInput');
+    const dashboardContent = document.getElementById('dashboard-content');
+    const loadingSpinner = document.getElementById('loading-spinner');
+    const errorMessage = document.getElementById('error-message');
+    const placeholder = document.getElementById('placeholder');
+    const biasCount = document.getElementById('biasCount');
 
-        // Function to show/hide the spinner and button state
-        function setLoading(isLoading) {
-            if (isLoading) {
-                analyzeButton.textContent = 'Analyzing...';
-                analyzeButton.disabled = true;
-                analyzeButton.classList.add('bg-gray-600', 'cursor-not-allowed');
-                analyzeButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
-                loadingSpinner.classList.remove('hidden');
-                placeholder.classList.add('hidden');
-                errorMessage.style.display = 'none';
-                biasCount.textContent = '...';
-            } else {
-                analyzeButton.textContent = 'Analyze Text';
-                analyzeButton.disabled = false;
-                analyzeButton.classList.remove('bg-gray-600', 'cursor-not-allowed');
-                analyzeButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
-                loadingSpinner.classList.add('hidden');
-            }
-        }
-
-        // Function to display insights on the dashboard
-        function displayInsights(insights) {
-            dashboardContent.innerHTML = '';
-            biasCount.textContent = insights.length;
-            
-            if (insights.length > 0) {
-                insights.forEach(insight => {
-                    const insightItem = document.createElement('div');
-                    insightItem.className = "bg-gray-700 p-4 rounded-xl shadow-inner border border-gray-600 space-y-2 hover:bg-gray-600 transition-colors duration-200";
-                    insightItem.innerHTML = `
-                        <div class="flex justify-between items-center text-sm font-semibold text-blue-400">
-                            <span>${insight.type}</span>
-                            <span class="text-gray-400">${new Date().toISOString().substr(11, 8)}</span>
-                        </div>
-                        <p class="text-gray-300 text-sm"><strong>Observation:</strong> ${insight.observation}</p>
-                        <p class="text-gray-400 text-sm"><strong>Implication:</strong> ${insight.implication}</p>
-                    `;
-                    dashboardContent.appendChild(insightItem);
-                });
-            } else {
-                const message = document.createElement('p');
-                message.className = "text-gray-400 text-center p-8";
-                message.textContent = "Analysis complete, no issues detected.";
-                dashboardContent.appendChild(message);
-            }
-        }
-
-        // Function for fetching with exponential backoff
-        async function retryFetchWithBackoff(url, options, retries = 5, backoff = 300) {
-            try {
-                const response = await fetch(url, options);
-                if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
-                }
-                return await response.json();
-            } catch (error) {
-                if (retries > 0) {
-                    console.warn(`Fetch failed, retrying in ${backoff}ms... (${retries} retries left)`);
-                    await new Promise(resolve => setTimeout(resolve, backoff));
-                    return retryFetchWithBackoff(url, options, retries - 1, backoff * 2);
-                } else {
-                    throw error;
-                }
-            }
-        }
-
-        // Function to analyze the text using the API
-        async function analyzeText(text) {
+    function setLoading(isLoading) {
+        if (isLoading) {
+            analyzeButton.textContent = 'Analyzing...';
+            analyzeButton.disabled = true;
+            analyzeButton.classList.add('bg-gray-600', 'cursor-not-allowed');
+            analyzeButton.classList.remove('bg-blue-600', 'hover:bg-blue-700');
+            loadingSpinner.classList.remove('hidden');
+            placeholder.classList.add('hidden');
             errorMessage.style.display = 'none';
+            biasCount.textContent = '...';
+        } else {
+            analyzeButton.textContent = 'Analyze Text';
+            analyzeButton.disabled = false;
+            analyzeButton.classList.remove('bg-gray-600', 'cursor-not-allowed');
+            analyzeButton.classList.add('bg-blue-600', 'hover:bg-blue-700');
+            loadingSpinner.classList.add('hidden');
+        }
+    }
 
-            if (!OPENROUTER_API_KEY) {
-                errorMessage.textContent = 'API key is missing. Please provide a valid key.';
-                errorMessage.style.display = 'block';
-                return;
-            }
+    function displayInsights(insights) {
+        dashboardContent.innerHTML = '';
+        biasCount.textContent = insights.length;
 
-            if (!text.trim()) {
-                errorMessage.textContent = 'Please enter some text or upload a file to analyze.';
-                errorMessage.style.display = 'block';
-                return;
-            }
+        if (insights.length > 0) {
+            insights.forEach(insight => {
+                const insightItem = document.createElement('div');
+                insightItem.className = "bg-gray-700 p-4 rounded-xl shadow-inner border border-gray-600 space-y-2 hover:bg-gray-600 transition-colors duration-200";
+                insightItem.innerHTML = `
+                    <div class="flex justify-between items-center text-sm font-semibold text-blue-400">
+                        <span>${insight.type}</span>
+                        <span class="text-gray-400">${new Date().toISOString().substr(11, 8)}</span>
+                    </div>
+                    <p class="text-gray-300 text-sm"><strong>Observation:</strong> ${insight.observation}</p>
+                    <p class="text-gray-400 text-sm"><strong>Implication:</strong> ${insight.implication}</p>
+                `;
+                dashboardContent.appendChild(insightItem);
+            });
+        } else {
+            const message = document.createElement('p');
+            message.className = "text-gray-400 text-center p-8";
+            message.textContent = "Analysis complete, no issues detected.";
+            dashboardContent.appendChild(message);
+        }
+    }
 
-            setLoading(true);
-            try {
-                const result = await retryFetchWithBackoff("https://openrouter.ai/api/v1/chat/completions", {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${OPENROUTER_API_KEY}`
-                    },
-                    body: JSON.stringify({
-                        model: MODEL_NAME,
-                        messages: [
-                            { role: 'system', content: systemInstruction },
-                            {
-                                role: 'user',
-                                content: `Analyze the following text for cognitive biases or ethical fallacies. Respond with a JSON object: "${text}"`
-                            }
-                        ]
-                    })
-                });
+    async function analyzeText(text) {
+        errorMessage.style.display = 'none';
 
-                const resultText = result?.choices?.[0]?.message?.content;
-
-                if (!resultText) {
-                    errorMessage.textContent = "The API did not return a valid response.";
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-                
-                const cleanedText = resultText.replace(/```json\s*|```\s*/g, '').trim();
-                let insights = [];
-
-                try {
-                    const parsedResult = JSON.parse(cleanedText);
-                    
-                    if (Array.isArray(parsedResult)) {
-                        insights = parsedResult.filter(item => 
-                            item && typeof item === 'object' && item.type && item.observation && item.implication
-                        );
-                    } else if (typeof parsedResult === 'object' && parsedResult !== null) {
-                        if (parsedResult.type && parsedResult.observation && parsedResult.implication) {
-                            insights = [parsedResult];
-                        }
-                    }
-                } catch (parseError) {
-                    console.error("Failed to parse JSON from AI response:", parseError, "Original text:", cleanedText);
-                    errorMessage.textContent = `API returned an unreadable or non-JSON response.`;
-                    errorMessage.style.display = 'block';
-                    return;
-                }
-
-                displayInsights(insights);
-
-            } catch (e) {
-                console.error('Failed to analyze text:', e);
-                errorMessage.textContent = 'Failed to analyze the text. Please check the console for details.';
-                errorMessage.style.display = 'block';
-            } finally {
-                setLoading(false);
-            }
+        if (!text.trim()) {
+            errorMessage.textContent = 'Please enter some text or upload a file to analyze.';
+            errorMessage.style.display = 'block';
+            return;
         }
 
-        // Event Listeners
-        analyzeButton.addEventListener('click', () => analyzeText(textInput.value));
-        uploadButton.addEventListener('click', () => fileInput.click());
-        fileInput.addEventListener('change', (event) => {
-            const file = event.target.files?.[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    const text = e.target.result;
-                    textInput.value = text;
-                    analyzeText(text); // Automatically analyze after upload
-                };
-                reader.readAsText(file);
+        setLoading(true);
+
+        const payload = {
+            model: MODEL_NAME,
+            messages: [
+                { role: "system", content: systemInstruction },
+                { role: "user", content: text }
+            ]
+        };
+
+        try {
+            const response = await fetch("/api/analyze", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const result = await response.json();
+            const resultText = result?.choices?.[0]?.message?.content;
+
+            if (!resultText) {
+                errorMessage.textContent = "The API did not return a valid response.";
+                errorMessage.style.display = 'block';
+                return;
             }
-        });
-    </script>
+
+            const cleanedText = resultText.replace(/```json\s*|```\s*/g, '').trim();
+            let insights = [];
+
+            try {
+                const parsedResult = JSON.parse(cleanedText);
+
+                if (Array.isArray(parsedResult)) {
+                    insights = parsedResult.filter(item =>
+                        item && typeof item === 'object' && item.type && item.observation && item.implication
+                    );
+                } else if (typeof parsedResult === 'object' && parsedResult !== null) {
+                    if (parsedResult.type && parsedResult.observation && parsedResult.implication) {
+                        insights = [parsedResult];
+                    }
+                }
+            } catch (parseError) {
+                console.error("Failed to parse JSON from AI response:", parseError, "Original text:", cleanedText);
+                errorMessage.textContent = `API returned an unreadable or non-JSON response.`;
+                errorMessage.style.display = 'block';
+                return;
+            }
+
+            displayInsights(insights);
+
+        } catch (error) {
+            console.error("Error analyzing text:", error);
+            errorMessage.textContent = 'Something went wrong while analyzing. Please try again.';
+            errorMessage.style.display = 'block';
+        } finally {
+            setLoading(false);
+        }
+    }
+
+    analyzeButton.addEventListener('click', () => analyzeText(textInput.value));
+    uploadButton.addEventListener('click', () => fileInput.click());
+    fileInput.addEventListener('change', (event) => {
+        const file = event.target.files?.[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const text = e.target.result;
+                textInput.value = text;
+                analyzeText(text);
+            };
+            reader.readAsText(file);
+        }
+    });
+</script>
+
 
 </body>
 </html>
+
 
 
