@@ -55,7 +55,7 @@
                     id="uploadButton"
                     class="flex-1 max-w-[150px] py-3 bg-gray-600 hover:bg-gray-700 text-white font-bold rounded-full transition-colors"
                 >
-                    Upload File (.txt or .md)
+                    Upload File
                 </button>
                 <input
                     type="file"
@@ -83,7 +83,7 @@
 
     <script>
         // Constants for the API
-        const OPENROUTER_API_KEY = "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";
+        const OPENROUTER_API_KEY = "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";
         const MODEL_NAME = "openai/gpt-oss-20b"; 
 
         const systemInstruction = `You are a professional Cognitive Auditor AI, a silent partner for high-stakes decisions.
@@ -147,13 +147,42 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
                     dashboardContent.appendChild(insightItem);
                 });
             } else {
-                placeholder.classList.remove('hidden');
-                dashboardContent.appendChild(placeholder);
+                const message = document.createElement('p');
+                message.className = "text-gray-400 text-center p-8";
+                message.textContent = "Analysis complete, no issues detected.";
+                dashboardContent.appendChild(message);
+            }
+        }
+
+        // Function for fetching with exponential backoff
+        async function retryFetchWithBackoff(url, options, retries = 5, backoff = 300) {
+            try {
+                const response = await fetch(url, options);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return await response.json();
+            } catch (error) {
+                if (retries > 0) {
+                    console.warn(`Fetch failed, retrying in ${backoff}ms... (${retries} retries left)`);
+                    await new Promise(resolve => setTimeout(resolve, backoff));
+                    return retryFetchWithBackoff(url, options, retries - 1, backoff * 2);
+                } else {
+                    throw error;
+                }
             }
         }
 
         // Function to analyze the text using the API
         async function analyzeText(text) {
+            errorMessage.style.display = 'none';
+
+            if (!OPENROUTER_API_KEY) {
+                errorMessage.textContent = 'API key is missing. Please provide a valid key.';
+                errorMessage.style.display = 'block';
+                return;
+            }
+
             if (!text.trim()) {
                 errorMessage.textContent = 'Please enter some text or upload a file to analyze.';
                 errorMessage.style.display = 'block';
@@ -162,7 +191,7 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
 
             setLoading(true);
             try {
-                const response = await fetch("https://openrouter.ai/api/v1/chat/completions", {
+                const result = await retryFetchWithBackoff("https://openrouter.ai/api/v1/chat/completions", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -180,44 +209,38 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
                     })
                 });
 
-                const result = await response.json();
                 const resultText = result?.choices?.[0]?.message?.content;
-                
-                console.log("Raw API Response:", result);
 
-                if (resultText) {
-                    const cleanedText = resultText.replace(/```json\s*|```\s*/g, '').trim();
-                    
-                    if (cleanedText !== '{}' && cleanedText !== '[]') {
-                        try {
-                            const parsedResult = JSON.parse(cleanedText);
-                            const newInsights = [];
-
-                            if (Array.isArray(parsedResult)) {
-                                parsedResult.forEach(item => {
-                                    if (item.type && item.observation && item.implication) {
-                                        newInsights.push(item);
-                                    }
-                                });
-                            } else if (parsedResult.type && parsedResult.observation && parsedResult.implication) {
-                                newInsights.push(parsedResult);
-                            }
-                            
-                            displayInsights(newInsights);
-                            if (newInsights.length === 0) {
-                                errorMessage.textContent = "Analysis complete, but no valid insights were found in the response.";
-                                errorMessage.style.display = 'block';
-                            }
-                        } catch (parseError) {
-                            console.error("Failed to parse JSON from AI response:", parseError, "Original text:", cleanedText);
-                            errorMessage.textContent = `API returned non-JSON or invalid JSON response.`;
-                            errorMessage.style.display = 'block';
-                        }
-                    } else {
-                        errorMessage.textContent = "Analysis complete, no issues detected.";
-                        errorMessage.style.display = 'block';
-                    }
+                if (!resultText) {
+                    errorMessage.textContent = "The API did not return a valid response.";
+                    errorMessage.style.display = 'block';
+                    return;
                 }
+                
+                const cleanedText = resultText.replace(/```json\s*|```\s*/g, '').trim();
+                let insights = [];
+
+                try {
+                    const parsedResult = JSON.parse(cleanedText);
+                    
+                    if (Array.isArray(parsedResult)) {
+                        insights = parsedResult.filter(item => 
+                            item && typeof item === 'object' && item.type && item.observation && item.implication
+                        );
+                    } else if (typeof parsedResult === 'object' && parsedResult !== null) {
+                        if (parsedResult.type && parsedResult.observation && parsedResult.implication) {
+                            insights = [parsedResult];
+                        }
+                    }
+                } catch (parseError) {
+                    console.error("Failed to parse JSON from AI response:", parseError, "Original text:", cleanedText);
+                    errorMessage.textContent = `API returned an unreadable or non-JSON response.`;
+                    errorMessage.style.display = 'block';
+                    return;
+                }
+
+                displayInsights(insights);
+
             } catch (e) {
                 console.error('Failed to analyze text:', e);
                 errorMessage.textContent = 'Failed to analyze the text. Please check the console for details.';
@@ -237,6 +260,7 @@ If no issues are detected, respond with an empty JSON object {}. Focus exclusive
                 reader.onload = (e) => {
                     const text = e.target.result;
                     textInput.value = text;
+                    analyzeText(text); // Automatically analyze after upload
                 };
                 reader.readAsText(file);
             }
