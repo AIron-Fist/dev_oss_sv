@@ -10,8 +10,8 @@ This project transforms gpt-oss-20b into a domain-specific cognitive advisor, sh
 
 ## 🧩 Features
 
-- **Real-Time Cognitive Auditing**  
-  Detects groupthink, logical fallacies, and emotional bias from live transcripts.
+- **Cognitive Auditing**  
+  Detects groupthink, logical fallacies, and emotional bias from meetings transcripts.
 
 - **Ethical Reflection Engine**  
   Surfaces moral dilemmas and blind spots using embedded ethical frameworks.
