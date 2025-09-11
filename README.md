@@ -1,10 +1,10 @@
 # 🧠 The Algorithmic Conscience
 
-A silent auditor for high-stakes decision-making. Built to reveal cognitive bias, ethical blind spots, and logical fallacies in real-time conversations.
+A silent auditor for high-stakes decision-making. Built to reveal cognitive bias, ethical blind spots, and logical fallacies in high-stakes conversations.
 
 ## 🚀 Overview
 
-In environments where decisions carry immense weight—boardrooms, legal negotiations, crisis response—human judgment is vulnerable to emotion, pressure, and bias. **The Algorithmic Conscience** is a lightweight AI-powered web app that acts as an invisible participant, surfacing hidden flaws in reasoning and ethics during live discussions.
+In environments where decisions carry immense weight—boardrooms, legal negotiations, crisis response—human judgment is vulnerable to emotion, pressure, and bias. **The Algorithmic Conscience** is a lightweight AI-powered web app that acts as an invisible participant, surfacing hidden flaws in reasoning and ethics during discussions.
 
 This project transforms gpt-oss-20b into a domain-specific cognitive advisor, showcasing the model’s ability to perform abstract reasoning, ethical analysis, and psychological insight.
 
